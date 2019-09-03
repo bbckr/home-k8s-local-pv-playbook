@@ -1,0 +1,20 @@
+---
+- hosts: "{{ target }}"
+  tasks:
+  - name: create discovery dir
+    file:
+      path: /mnt/disks
+      state: directory
+  - name: format disk
+    command: sudo mkfs.ext4 -F "/dev/{{ disk_name }}"
+  - name: get uuid
+    command: sudo blkid -s UUID -o value "/dev/{{ disk_name }}"
+    register: disk_uuid
+  - name: create mount dir
+    file:
+      path: /mnt/disks/{{ disk_uuid.stdout }}
+      state: directory
+  - name: mount dir
+    command: sudo mount -t ext4 "/dev/{{ disk_name }}" "/mnt/disks/{{ disk_uuid.stdout }}"
+  - name: persist mount
+    command: echo UUID=`sudo blkid -s UUID -o value "/dev/{{ disk_name }}"` "/mnt/disks/{{ disk_uuid.stdout }}" ext4 defaults 0 2 | sudo tee -a /etc/fstab
